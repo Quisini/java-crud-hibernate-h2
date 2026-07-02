@@ -1,6 +1,10 @@
+C:\Users\Gustavo\Downloads\cch-crud-cliente\src\main\java\cch\dao\CidadeDAO.java
 C:\Users\Gustavo\Downloads\cch-crud-cliente\src\main\java\cch\dao\ClienteDAO.java
 C:\Users\Gustavo\Downloads\cch-crud-cliente\src\main\java\cch\Main.java
+C:\Users\Gustavo\Downloads\cch-crud-cliente\src\main\java\cch\model\Cidade.java
 C:\Users\Gustavo\Downloads\cch-crud-cliente\src\main\java\cch\model\Cliente.java
 C:\Users\Gustavo\Downloads\cch-crud-cliente\src\main\java\cch\util\H2Console.java
 C:\Users\Gustavo\Downloads\cch-crud-cliente\src\main\java\cch\util\HibernateUtil.java
-C:\Users\Gustavo\Downloads\cch-crud-cliente\src\main\java\cch\view\fr_telaPrincipal.java
+C:\Users\Gustavo\Downloads\cch-crud-cliente\src\main\java\cch\view\TelaCidade.java
+C:\Users\Gustavo\Downloads\cch-crud-cliente\src\main\java\cch\view\TelaCliente.java
+C:\Users\Gustavo\Downloads\cch-crud-cliente\src\main\java\cch\view\TelaPrincipal.java

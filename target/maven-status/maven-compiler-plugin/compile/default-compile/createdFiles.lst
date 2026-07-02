@@ -1,4 +1,13 @@
-cch\util\HibernateUtil.class
-cch\view\fr_telaPrincipal.class
+Frames\TelaCliente$3.class
+Frames\TelaCliente$4.class
+Frames\TelaCidade$1.class
 cch\Main.class
+Frames\TelaCidade.class
+cch\util\HibernateUtil.class
+Frames\TelaCidade$3.class
+Frames\TelaPrincipal.class
+Frames\TelaCliente$2.class
+Frames\TelaCliente.class
 cch\util\H2Console.class
+Frames\TelaCliente$1.class
+Frames\TelaCidade$2.class

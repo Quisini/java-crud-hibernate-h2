@@ -2,7 +2,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package Frames;
+package cch.view;
+
+import cch.dao.CidadeDAO;
+import cch.model.Cidade;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -10,8 +16,8 @@ package Frames;
  */
 public class TelaCidade extends javax.swing.JFrame {
     
-    private int contadorCodigo = 1;
-    private int linhaSelecionada = -1;
+    private CidadeDAO cidadeDAO = new CidadeDAO();
+    private Long cidadeSelecionadaId = null;
     private javax.swing.table.TableRowSorter<javax.swing.table.DefaultTableModel> sorter;
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(TelaCidade.class.getName());
@@ -52,13 +58,19 @@ public class TelaCidade extends javax.swing.JFrame {
                 }
             }
         });
+        
+        sorter = new javax.swing.table.TableRowSorter<>((javax.swing.table.DefaultTableModel) jTable1.getModel());
+        jTable1.setRowSorter(sorter);
+        
+        carregarTabela();
     }
     
     private void carregarLinhaSelecionada() {
-        linhaSelecionada = jTable1.getSelectedRow();
-        javax.swing.table.DefaultTableModel modelo = (javax.swing.table.DefaultTableModel) jTable1.getModel();
-
-        txtCod.setText(modelo.getValueAt(linhaSelecionada, 0).toString());
+        int linhaSelecionada = jTable1.convertRowIndexToModel(jTable1.getSelectedRow());
+        DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+        
+        cidadeSelecionadaId = (Long) modelo.getValueAt(linhaSelecionada, 0);
+        txtCod.setText(String.valueOf(cidadeSelecionadaId));
         txtNome.setText(modelo.getValueAt(linhaSelecionada, 1).toString());
         txtUF.setText(modelo.getValueAt(linhaSelecionada, 2).toString());
     }
@@ -67,7 +79,22 @@ public class TelaCidade extends javax.swing.JFrame {
         txtNome.setText("");
         txtUF.setText("");
         jTable1.clearSelection();
-        linhaSelecionada = -1;
+        cidadeSelecionadaId = null;
+        txtCod.setText("");
+    }
+    
+    private void carregarTabela() {
+        DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+        modelo.setRowCount(0);
+        
+        List<Cidade> cidades = cidadeDAO.listarTodos();
+        for (Cidade cidade : cidades) {
+            modelo.addRow(new Object[]{
+                cidade.getId(),
+                cidade.getNome(),
+                cidade.getUf()
+            });
+        }
     }
     
     @SuppressWarnings("unchecked")
@@ -92,7 +119,7 @@ public class TelaCidade extends javax.swing.JFrame {
 
         jLabel2.setText("jLabel2");
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jLabel1.setText("Cadastro de cidade");
 
@@ -118,15 +145,27 @@ public class TelaCidade extends javax.swing.JFrame {
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null},
-                {null, null, null},
-                {null, null, null},
-                {null, null, null}
+
             },
             new String [] {
                 "Código", "Nome", "UF"
             }
-        ));
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Long.class, java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
         jScrollPane1.setViewportView(jTable1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -216,36 +255,59 @@ public class TelaCidade extends javax.swing.JFrame {
             return;
         }
 
-        javax.swing.table.DefaultTableModel modelo = (javax.swing.table.DefaultTableModel) jTable1.getModel();
-        
-
-        modelo.addRow(new Object[]{
-            txtCod.getText(), txtNome.getText(), txtUF.getText(),          
-        });
-        contadorCodigo++;
-        limparCampos();
-        txtCod.setText(String.valueOf(contadorCodigo));
+        try {
+            Cidade cidade = new Cidade(txtNome.getText(), txtUF.getText().toUpperCase());
+            cidadeDAO.salvar(cidade);
+            
+            limparCampos();
+            carregarTabela();
+            javax.swing.JOptionPane.showMessageDialog(this, "Cidade salva com sucesso!");
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Erro ao salvar cidade: " + e.getMessage());
+            e.printStackTrace();
+        }
     }//GEN-LAST:event_btnNovoActionPerformed
 
     private void btnSalvarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSalvarActionPerformed
-        if (linhaSelecionada == -1) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Selecione um cliente na tabela para editar.");
+        if (cidadeSelecionadaId == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Selecione uma cidade na tabela para editar.");
             return;
         }
 
-        javax.swing.table.DefaultTableModel modelo = (javax.swing.table.DefaultTableModel) jTable1.getModel();
-     
-
-        modelo.setValueAt(txtCod.getText(), linhaSelecionada, 0);
-        modelo.setValueAt(txtNome.getText(), linhaSelecionada, 1);
-        modelo.setValueAt(txtUF.getText(), linhaSelecionada, 2);
-
-        limparCampos();
-        txtCod.setText(String.valueOf(contadorCodigo));
+        try {
+            Cidade cidade = cidadeDAO.buscarPorId(cidadeSelecionadaId);
+            cidade.setNome(txtNome.getText());
+            cidade.setUf(txtUF.getText().toUpperCase());
+            cidadeDAO.atualizar(cidade);
+            
+            limparCampos();
+            carregarTabela();
+            javax.swing.JOptionPane.showMessageDialog(this, "Cidade atualizada com sucesso!");
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Erro ao atualizar cidade: " + e.getMessage());
+            e.printStackTrace();
+        }
     }//GEN-LAST:event_btnSalvarActionPerformed
 
     private void btnExcluirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExcluirActionPerformed
-        // TODO add your handling code here:
+        if (cidadeSelecionadaId == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Selecione uma cidade para excluir.");
+            return;
+        }
+        
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(this, "Tem certeza que deseja excluir esta cidade?", "Confirmação", javax.swing.JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+            try {
+                cidadeDAO.excluir(cidadeSelecionadaId);
+                limparCampos();
+                carregarTabela();
+                javax.swing.JOptionPane.showMessageDialog(this, "Cidade excluída com sucesso!");
+            } catch (Exception e) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Erro ao excluir cidade: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
     }//GEN-LAST:event_btnExcluirActionPerformed
 
     private void btnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOkActionPerformed

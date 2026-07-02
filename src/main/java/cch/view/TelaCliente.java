@@ -2,20 +2,28 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package Frames;
+package cch.view;
 
+import cch.dao.CidadeDAO;
+import cch.dao.ClienteDAO;
+import cch.model.Cidade;
+import cch.model.Cliente;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.table.DefaultTableModel;
 
 public class TelaCliente extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(TelaCliente.class.getName());
 
-    private int contadorCodigo = 1;
-    private int linhaSelecionada = -1;
+    private ClienteDAO clienteDAO = new ClienteDAO();
+    private CidadeDAO cidadeDAO = new CidadeDAO();
+    private Long clienteSelecionadoId = null;
     private javax.swing.table.TableRowSorter<javax.swing.table.DefaultTableModel> sorter;
     
     public TelaCliente() {
         initComponents();
-        txtCodigo.setEnabled(false);
+        txtCod.setEnabled(false);
         txtCPF.addKeyListener(new java.awt.event.KeyAdapter() {
         @Override
         public void keyTyped(java.awt.event.KeyEvent evt) {
@@ -29,26 +37,25 @@ public class TelaCliente extends javax.swing.JFrame {
         }
     });
        txtNome.addKeyListener(new java.awt.event.KeyAdapter() {
-    @Override
-    public void keyTyped(java.awt.event.KeyEvent evt) {
-        char c = evt.getKeyChar();
+        @Override
+        public void keyTyped(java.awt.event.KeyEvent evt) {
+            char c = evt.getKeyChar();
 
-        if (!Character.isLetter(c) && c != ' ' && c != java.awt.event.KeyEvent.VK_BACK_SPACE) {
-            evt.consume(); 
+            if (!Character.isLetter(c) && c != ' ' && c != java.awt.event.KeyEvent.VK_BACK_SPACE) {
+                evt.consume(); 
+            }
         }
-    }
     });
-    txtCodigo.setText(String.valueOf(contadorCodigo));
-    
-    Tabela.getSelectionModel().addListSelectionListener(new javax.swing.event.ListSelectionListener() {
-    @Override
-    public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-        if (!evt.getValueIsAdjusting() && Tabela.getSelectedRow() != -1) {
-            carregarLinhaSelecionada();
+        
+        Tabela.getSelectionModel().addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+        @Override
+        public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+            if (!evt.getValueIsAdjusting() && Tabela.getSelectedRow() != -1) {
+                carregarLinhaSelecionada();
+            }
         }
-    }
     });
-    
+        
         sorter = new javax.swing.table.TableRowSorter<>((javax.swing.table.DefaultTableModel) Tabela.getModel());
         Tabela.setRowSorter(sorter);
         
@@ -64,39 +71,93 @@ public class TelaCliente extends javax.swing.JFrame {
                 }
             }
         });
+        
+        carregarCidadesComboBox();
+        carregarTabela();
+    }
     
-}
     private void carregarLinhaSelecionada() {
-        linhaSelecionada = Tabela.getSelectedRow();
-        javax.swing.table.DefaultTableModel modelo = (javax.swing.table.DefaultTableModel) Tabela.getModel();
-
-        txtCodigo.setText(modelo.getValueAt(linhaSelecionada, 0).toString());
+        int linhaSelecionada = Tabela.convertRowIndexToModel(Tabela.getSelectedRow());
+        DefaultTableModel modelo = (DefaultTableModel) Tabela.getModel();
+        
+        clienteSelecionadoId = (Long) modelo.getValueAt(linhaSelecionada, 0);
+        txtCod.setText(String.valueOf(clienteSelecionadoId));
         txtNome.setText(modelo.getValueAt(linhaSelecionada, 1).toString());
         txtCPF.setText(modelo.getValueAt(linhaSelecionada, 2).toString());
         txtTelefone.setText(modelo.getValueAt(linhaSelecionada, 3).toString());
         txtEmail.setText(modelo.getValueAt(linhaSelecionada, 4).toString());
-        cbCidade.setSelectedItem(modelo.getValueAt(linhaSelecionada, 5).toString());
+        
+        // Encontrar a cidade no ComboBox
+        String cidadeStr = modelo.getValueAt(linhaSelecionada, 5).toString();
+        for (int i = 0; i < cbCidade.getItemCount(); i++) {
+            if (cbCidade.getItemAt(i).toString().equals(cidadeStr)) {
+                cbCidade.setSelectedIndex(i);
+                break;
+            }
+        }
     }
+    
     private void limparCampos() {
-    txtNome.setText("");
-    txtCPF.setText("");
-    txtTelefone.setText("");
-    txtEmail.setText("");
-    cbCidade.setSelectedIndex(0);
-    Tabela.clearSelection();
-    linhaSelecionada = -1;
-}
+        txtNome.setText("");
+        txtCPF.setText("");
+        txtTelefone.setText("");
+        txtEmail.setText("");
+        if (cbCidade.getItemCount() > 0) {
+            cbCidade.setSelectedIndex(0);
+        }
+        Tabela.clearSelection();
+        clienteSelecionadoId = null;
+        txtCod.setText("");
+    }
     
-
-
+    private void carregarCidadesComboBox() {
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+        List<Cidade> cidades = cidadeDAO.listarTodos();
+        
+        for (Cidade cidade : cidades) {
+            model.addElement(cidade.toString());
+        }
+        
+        cbCidade.setModel(model);
+    }
     
+    private Cidade getCidadeSelecionada() {
+        String cidadeStr = (String) cbCidade.getSelectedItem();
+        if (cidadeStr == null) return null;
+        
+        List<Cidade> cidades = cidadeDAO.listarTodos();
+        for (Cidade cidade : cidades) {
+            if (cidade.toString().equals(cidadeStr)) {
+                return cidade;
+            }
+        }
+        return null;
+    }
+    
+    private void carregarTabela() {
+        DefaultTableModel modelo = (DefaultTableModel) Tabela.getModel();
+        modelo.setRowCount(0);
+        
+        List<Cliente> clientes = clienteDAO.listarTodos();
+        for (Cliente cliente : clientes) {
+            modelo.addRow(new Object[]{
+                cliente.getId(),
+                cliente.getNome(),
+                cliente.getCpf(),
+                cliente.getTelefone(),
+                cliente.getEmail(),
+                cliente.getCidade() != null ? cliente.getCidade().toString() : ""
+            });
+        }
+    }
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        txtCodigo = new javax.swing.JTextField();
+        txtCod = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         txtCPF = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
@@ -115,14 +176,14 @@ public class TelaCliente extends javax.swing.JFrame {
         Tabela = new javax.swing.JTable();
         cbCidade = new javax.swing.JComboBox<>();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jLabel1.setText("Cadastro de cliente");
 
         jLabel2.setText("Código");
 
-        txtCodigo.setText("gerado automaticamente");
-        txtCodigo.addActionListener(this::txtCodigoActionPerformed);
+        txtCod.setText("gerado automaticamente");
+        txtCod.addActionListener(this::txtCodActionPerformed);
 
         jLabel3.setText("CPF");
 
@@ -145,7 +206,6 @@ public class TelaCliente extends javax.swing.JFrame {
         btnExcluir.setText("Excluir");
         btnExcluir.addActionListener(this::btnExcluirActionPerformed);
 
-        txtPesquisar.setText("Pesquisa");
         txtPesquisar.setToolTipText("Pesquisa por nome");
         txtPesquisar.addActionListener(this::txtPesquisarActionPerformed);
 
@@ -154,18 +214,30 @@ public class TelaCliente extends javax.swing.JFrame {
 
         Tabela.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null}
+
             },
             new String [] {
                 "Código", "Nome", "CPF", "Telefone", "E-mail", "Cidade"
             }
-        ));
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Long.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
         jScrollPane1.setViewportView(Tabela);
 
-        cbCidade.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cbCidade.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Nenhuma cidade cadastrada" }));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -190,7 +262,7 @@ public class TelaCliente extends javax.swing.JFrame {
                                 .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGap(177, 177, 177))
                             .addComponent(txtEmail)
-                            .addComponent(txtCodigo, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(txtCod, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(254, 254, 254)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
@@ -232,7 +304,7 @@ public class TelaCliente extends javax.swing.JFrame {
                     .addComponent(jLabel5))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtCodigo, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtCod, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtNome, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -267,52 +339,56 @@ public class TelaCliente extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void txtCodigoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCodigoActionPerformed
+    private void txtCodActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCodActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_txtCodigoActionPerformed
+    }//GEN-LAST:event_txtCodActionPerformed
 
     private void txtCPFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCPFActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtCPFActionPerformed
 
     private void bntSalvarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bntSalvarActionPerformed
-        if (linhaSelecionada == -1) {
+        if (clienteSelecionadoId == null) {
             javax.swing.JOptionPane.showMessageDialog(this, "Selecione um cliente na tabela para editar.");
             return;
         }
 
-        javax.swing.table.DefaultTableModel modelo = (javax.swing.table.DefaultTableModel) Tabela.getModel();
-        String cidadeSelecionada = cbCidade.getSelectedItem() != null ? cbCidade.getSelectedItem().toString() : "";
-
-        modelo.setValueAt(txtCodigo.getText(), linhaSelecionada, 0);
-        modelo.setValueAt(txtNome.getText(), linhaSelecionada, 1);
-        modelo.setValueAt(txtCPF.getText(), linhaSelecionada, 2);
-        modelo.setValueAt(txtTelefone.getText(), linhaSelecionada, 3);
-        modelo.setValueAt(txtEmail.getText(), linhaSelecionada, 4);
-        modelo.setValueAt(cidadeSelecionada, linhaSelecionada, 5);
-
-        limparCampos();
-        txtCodigo.setText(String.valueOf(contadorCodigo));
+        try {
+            Cliente cliente = clienteDAO.buscarPorId(clienteSelecionadoId);
+            cliente.setNome(txtNome.getText());
+            cliente.setCpf(txtCPF.getText());
+            cliente.setEmail(txtEmail.getText());
+            cliente.setTelefone(txtTelefone.getText());
+            cliente.setCidade(getCidadeSelecionada());
+            
+            clienteDAO.atualizar(cliente);
+            
+            limparCampos();
+            carregarTabela();
+            javax.swing.JOptionPane.showMessageDialog(this, "Cliente atualizado com sucesso!");
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Erro ao atualizar cliente: " + e.getMessage());
+            e.printStackTrace();
+        }
     }//GEN-LAST:event_bntSalvarActionPerformed
 
     private void btnNovoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNovoActionPerformed
-        javax.swing.table.DefaultTableModel modelo = (javax.swing.table.DefaultTableModel) Tabela.getModel();
-        String cidadeSelecionada = cbCidade.getSelectedItem() != null ? cbCidade.getSelectedItem().toString() : "";
-
         if (txtNome.getText().trim().isEmpty()) {
             javax.swing.JOptionPane.showMessageDialog(this, "Preencha ao menos o nome antes de adicionar.");
             return;
         }
 
-        modelo.addRow(new Object[]{
-            txtCodigo.getText(), txtNome.getText(), txtCPF.getText(),
-            txtTelefone.getText(), txtEmail.getText(), cidadeSelecionada
-        });
-
-        contadorCodigo++;
-
-        limparCampos();
-        txtCodigo.setText(String.valueOf(contadorCodigo));
+        try {
+            Cliente cliente = new Cliente(txtNome.getText(), txtCPF.getText(), txtEmail.getText(), txtTelefone.getText(), getCidadeSelecionada());
+            clienteDAO.salvar(cliente);
+            
+            limparCampos();
+            carregarTabela();
+            javax.swing.JOptionPane.showMessageDialog(this, "Cliente salvo com sucesso!");
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Erro ao salvar cliente: " + e.getMessage());
+            e.printStackTrace();
+        }
     }//GEN-LAST:event_btnNovoActionPerformed
 
     private void btnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOkActionPerformed
@@ -326,16 +402,24 @@ public class TelaCliente extends javax.swing.JFrame {
     }//GEN-LAST:event_btnOkActionPerformed
 
     private void btnExcluirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExcluirActionPerformed
-        int linha = Tabela.getSelectedRow();
-
-        if (linha == -1) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Selecione uma linha para excluir.");
+        if (clienteSelecionadoId == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Selecione um cliente para excluir.");
             return;
         }
-
-        javax.swing.table.DefaultTableModel modelo = (javax.swing.table.DefaultTableModel) Tabela.getModel();
-        modelo.removeRow(linha);
-        limparCampos();
+        
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(this, "Tem certeza que deseja excluir este cliente?", "Confirmação", javax.swing.JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+            try {
+                clienteDAO.excluir(clienteSelecionadoId);
+                limparCampos();
+                carregarTabela();
+                javax.swing.JOptionPane.showMessageDialog(this, "Cliente excluído com sucesso!");
+            } catch (Exception e) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Erro ao excluir cliente: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
     }//GEN-LAST:event_btnExcluirActionPerformed
 
     private void txtPesquisarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPesquisarActionPerformed
@@ -383,7 +467,7 @@ public class TelaCliente extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField txtCPF;
-    private javax.swing.JTextField txtCodigo;
+    private javax.swing.JTextField txtCod;
     private javax.swing.JTextField txtEmail;
     private javax.swing.JTextField txtNome;
     private javax.swing.JTextField txtPesquisar;
