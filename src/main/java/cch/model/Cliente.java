@@ -1,7 +1,12 @@
 package cch.model;
 
 import jakarta.persistence.*;
+import cch.model.Cidade;
 
+/**
+ * 
+ * @author Gustavo
+ */
 @Entity
 @Table(name = "cliente")
 public class Cliente {
@@ -12,15 +17,18 @@ public class Cliente {
     private String cpf;
     private String email;
     private String telefone;
+    @ManyToOne
+    private Cidade cidade;
 
     public Cliente() {
     }
 
-    public Cliente(String nome, String cpf, String email, String telefone) {
+    public Cliente(String nome, String cpf, String email, String telefone, Cidade cidade) {
         this.nome = nome;
         this.cpf = cpf;
         this.email = email;
         this.telefone = telefone;
+        this.cidade = cidade;
     }
 
     public Long getId() {
@@ -61,5 +69,13 @@ public class Cliente {
 
     public void setTelefone(String telefone){
         this.telefone = telefone;
+    }
+    
+    public Cidade getCidade(){
+        return cidade;
+    }
+    
+    public void setCidade(Cidade cidade){
+        this.cidade = cidade;
     }
 }
