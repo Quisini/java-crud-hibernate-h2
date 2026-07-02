@@ -112,7 +112,7 @@ public class TelaCliente extends javax.swing.JFrame {
     
     private void carregarCidadesComboBox() {
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
-        List<Cidade> cidades = cidadeDAO.listarTodos();
+        List<Cidade> cidades = cidadeDAO.listarTodas();
         
         for (Cidade cidade : cidades) {
             model.addElement(cidade.toString());
@@ -125,7 +125,7 @@ public class TelaCliente extends javax.swing.JFrame {
         String cidadeStr = (String) cbCidade.getSelectedItem();
         if (cidadeStr == null) return null;
         
-        List<Cidade> cidades = cidadeDAO.listarTodos();
+        List<Cidade> cidades = cidadeDAO.listarTodas();
         for (Cidade cidade : cidades) {
             if (cidade.toString().equals(cidadeStr)) {
                 return cidade;
@@ -353,13 +353,19 @@ public class TelaCliente extends javax.swing.JFrame {
             return;
         }
 
+        Cidade cidadeSelecionada = getCidadeSelecionada();
+        if (cidadeSelecionada == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "É obrigatório selecionar uma cidade para o cliente!");
+            return;
+        }
+        
         try {
             Cliente cliente = clienteDAO.buscarPorId(clienteSelecionadoId);
             cliente.setNome(txtNome.getText());
             cliente.setCpf(txtCPF.getText());
             cliente.setEmail(txtEmail.getText());
             cliente.setTelefone(txtTelefone.getText());
-            cliente.setCidade(getCidadeSelecionada());
+            cliente.setCidade(cidadeSelecionada);
             
             clienteDAO.atualizar(cliente);
             
@@ -374,12 +380,18 @@ public class TelaCliente extends javax.swing.JFrame {
 
     private void btnNovoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNovoActionPerformed
         if (txtNome.getText().trim().isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Preencha ao menos o nome antes de adicionar.");
+            javax.swing.JOptionPane.showMessageDialog(this, "Preencha o nome do cliente antes de adicionar.");
             return;
         }
 
+        Cidade cidadeSelecionada = getCidadeSelecionada();
+        if (cidadeSelecionada == null) {
+            javax.swing.JOptionPane.showMessageDialog(this, "É obrigatório selecionar uma cidade para o cliente!");
+            return;
+        }
+        
         try {
-            Cliente cliente = new Cliente(txtNome.getText(), txtCPF.getText(), txtEmail.getText(), txtTelefone.getText(), getCidadeSelecionada());
+            Cliente cliente = new Cliente(txtNome.getText(), txtCPF.getText(), txtEmail.getText(), txtTelefone.getText(), cidadeSelecionada);
             clienteDAO.salvar(cliente);
             
             limparCampos();
@@ -411,13 +423,12 @@ public class TelaCliente extends javax.swing.JFrame {
         
         if (confirm == javax.swing.JOptionPane.YES_OPTION) {
             try {
-                clienteDAO.excluir(clienteSelecionadoId);
+                clienteDAO.excluir(clienteDAO.buscarPorId(clienteSelecionadoId));
                 limparCampos();
                 carregarTabela();
                 javax.swing.JOptionPane.showMessageDialog(this, "Cliente excluído com sucesso!");
             } catch (Exception e) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Erro ao excluir cliente: " + e.getMessage());
-                e.printStackTrace();
             }
         }
     }//GEN-LAST:event_btnExcluirActionPerformed

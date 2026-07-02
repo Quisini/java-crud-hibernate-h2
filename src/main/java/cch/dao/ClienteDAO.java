@@ -77,4 +77,10 @@ public class ClienteDAO {
             return query.list();
         }
     }
+
+    public Cliente buscarPorId(Long id) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.get(Cliente.class, id);
+        }
+    }
 }

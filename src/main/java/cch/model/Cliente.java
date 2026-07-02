@@ -1,7 +1,8 @@
 package cch.model;
 
 import jakarta.persistence.*;
-import cch.model.Cidade;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * 
@@ -13,11 +14,16 @@ public class Cliente {
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY) 
     private Long id;
+    
+    @NotBlank(message = "O nome do cliente é obrigatório")
     private String nome;
+    
     private String cpf;
     private String email;
     private String telefone;
-    @ManyToOne
+    
+    @ManyToOne(optional = false)
+    @NotNull(message = "A cidade é obrigatória")
     private Cidade cidade;
 
     public Cliente() {

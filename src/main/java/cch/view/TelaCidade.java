@@ -87,7 +87,7 @@ public class TelaCidade extends javax.swing.JFrame {
         DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
         modelo.setRowCount(0);
         
-        List<Cidade> cidades = cidadeDAO.listarTodos();
+        List<Cidade> cidades = cidadeDAO.listarTodas();
         for (Cidade cidade : cidades) {
             modelo.addRow(new Object[]{
                 cidade.getId(),
@@ -251,12 +251,22 @@ public class TelaCidade extends javax.swing.JFrame {
 
     private void btnNovoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNovoActionPerformed
         if (txtNome.getText().trim().isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Preencha ao menos o nome antes de adicionar.");
+            javax.swing.JOptionPane.showMessageDialog(this, "Preencha o nome da cidade antes de adicionar.");
+            return;
+        }
+        
+        String uf = txtUF.getText().trim().toUpperCase();
+        if (uf.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "A UF é obrigatória!");
+            return;
+        }
+        if (uf.length() != 2) {
+            javax.swing.JOptionPane.showMessageDialog(this, "A UF deve ter exatamente 2 caracteres!");
             return;
         }
 
         try {
-            Cidade cidade = new Cidade(txtNome.getText(), txtUF.getText().toUpperCase());
+            Cidade cidade = new Cidade(txtNome.getText(), uf);
             cidadeDAO.salvar(cidade);
             
             limparCampos();
@@ -274,10 +284,20 @@ public class TelaCidade extends javax.swing.JFrame {
             return;
         }
 
+        String uf = txtUF.getText().trim().toUpperCase();
+        if (uf.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "A UF é obrigatória!");
+            return;
+        }
+        if (uf.length() != 2) {
+            javax.swing.JOptionPane.showMessageDialog(this, "A UF deve ter exatamente 2 caracteres!");
+            return;
+        }
+        
         try {
             Cidade cidade = cidadeDAO.buscarPorId(cidadeSelecionadaId);
             cidade.setNome(txtNome.getText());
-            cidade.setUf(txtUF.getText().toUpperCase());
+            cidade.setUf(uf);
             cidadeDAO.atualizar(cidade);
             
             limparCampos();
@@ -299,7 +319,7 @@ public class TelaCidade extends javax.swing.JFrame {
         
         if (confirm == javax.swing.JOptionPane.YES_OPTION) {
             try {
-                cidadeDAO.excluir(cidadeSelecionadaId);
+                cidadeDAO.excluir(cidadeDAO.buscarPorId(cidadeSelecionadaId));
                 limparCampos();
                 carregarTabela();
                 javax.swing.JOptionPane.showMessageDialog(this, "Cidade excluída com sucesso!");
